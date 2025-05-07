@@ -1,0 +1,21 @@
+---
+nameOverride: argo
+applicationSet:
+  replicas: 1
+
+controller:
+  replicas: 1
+
+repoServer:
+  replicas: 1
+  serviceAccount:
+    create: true
+
+configs:
+  cmp:
+    create: true
+  cm:
+    create: true
+    exec.enabled: false
+    server.rbac.log.enforce.enable: false
+    admin.enabled: true

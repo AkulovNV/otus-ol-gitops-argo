@@ -1,0 +1,161 @@
+---
+nameOverride: argo
+applicationSet:
+  replicas: 1
+
+controller:
+  replicas: 1
+
+repoServer:
+  replicas: 1
+  initContainers:
+    # - name: download-tools
+    #   image: registry.access.redhat.com/ubi8
+    #   env:
+    #     - name: AVP_VERSION
+    #       value: 1.18.1
+    #   envFrom:
+    #     - secretRef:
+    #         name: argocd-vault-env
+    #   command: [sh, -c]
+    #   args:
+    #     - >-
+    #       curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v$(AVP_VERSION)/argocd-vault-plugin_$(AVP_VERSION)_linux_amd64 -o argocd-vault-plugin &&
+    #       chmod +x argocd-vault-plugin &&
+    #       mv argocd-vault-plugin /custom-tools/
+    #   volumeMounts:
+    #     - mountPath: /custom-tools
+    #       name: custom-tools
+  # extraContainers:
+  #   - name: avp-helm
+  #     command: [/var/run/argocd/argocd-cmp-server]
+  #     image: quay.io/argoproj/argocd:v2.14.9
+  #     securityContext:
+  #       runAsNonRoot: true
+  #       runAsUser: 999
+  #     envFrom:
+  #       - secretRef:
+  #           name: argocd-vault-env
+  #     volumeMounts:
+  #       - mountPath: /var/run/argocd
+  #         name: var-files
+  #       - mountPath: /home/argocd/cmp-server/plugins
+  #         name: plugins
+  #       - mountPath: /tmp
+  #         name: cmp-tmp
+  #       # Register plugins into sidecar
+  #       - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+  #         subPath: avp-helm.yaml
+  #         name: argocd-cmp-cm
+  #       # Important: Mount tools into $PATH
+  #       - name: custom-tools
+  #         subPath: argocd-vault-plugin
+  #         mountPath: /usr/local/bin/argocd-vault-plugin
+  #   - name: avp-helm-kustomize
+  #     command: [/var/run/argocd/argocd-cmp-server]
+  #     image: quay.io/argoproj/argocd:v2.14.9
+  #     securityContext:
+  #       runAsNonRoot: true
+  #       runAsUser: 999
+  #     envFrom:
+  #       - secretRef:
+  #           name: argocd-vault-env
+  #     volumeMounts:
+  #       - mountPath: /var/run/argocd
+  #         name: var-files
+  #       - mountPath: /home/argocd/cmp-server/plugins
+  #         name: plugins
+  #       - mountPath: /tmp
+  #         name: cmp-tmp
+  #       # Register plugins into sidecar
+  #       - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+  #         subPath: avp-helm-kustomize.yaml
+  #         name: argocd-cmp-cm
+  #       # Important: Mount tools into $PATH
+  #       - name: custom-tools
+  #         subPath: argocd-vault-plugin
+  #         mountPath: /usr/local/bin/argocd-vault-plugin
+  # volumes:
+  #   - configMap:
+  #       name: argocd-cmp-cm
+  #     name: argocd-cmp-cm
+  #   - name: cmp-tmp
+  #     emptyDir: {}
+  #   - name: custom-tools
+  #     emptyDir: {}
+  serviceAccount:
+    create: true
+    name: "argocd-repo-server"
+
+server:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+
+  ingress:
+    enabled: true
+    controller: generic
+    annotations:
+      kubernetes.io/ingress.class: nginx-internal
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+
+    ingressClassName: "nginx-internal"
+    hostname: argo.infra.anna.money
+    path: /
+
+    pathType: Prefix
+
+    # Disable autogeneration of TLS secret and use the one provided in the `extraTls` section
+    tls: false
+    extraTls:
+      - hosts:
+          - argo.infra.anna.money
+        secretName: star-infra-anna-money
+
+configs:
+  cmp:
+    create: true
+    plugins:
+      avp-helm:
+        allowConcurrency: true
+        # Note: this command is run _before_ any Helm templating is done, therefore the logic is to check
+        # if this looks like a Helm chart
+        discover:
+          find:
+            command:
+              - sh
+              - "-c"
+              - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
+        generate:
+          # **IMPORTANT**: passing `${ARGOCD_ENV_helm_args}` effectively allows users to run arbitrary code in the Argo CD
+          # repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If
+          # possible, determine which Helm arguments are needed by your users and explicitly pass only those arguments.
+          command:
+            - bash
+            - "-c"
+            - |
+              helm template $ARGOCD_APP_NAME --include-crds -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_HELM_ARGS} -f <(echo "$ARGOCD_ENV_HELM_VALUES") . |
+              argocd-vault-plugin generate --verbose-sensitive-output -
+        lockRepo: false
+      avp-helm-kustomize:
+        allowConcurrency: true
+        discover:
+          find:
+            command:
+              - find
+              - "."
+              - -name
+              - kustomization.yaml
+        generate:
+          command:
+            - sh
+            - "-c"
+            - "kustomize build --enable-helm . | argocd-vault-plugin generate -"
+        lockRepo: false
+  cm:
+    create: true
+    exec.enabled: false
+    server.rbac.log.enforce.enable: false
+    admin.enabled: true
