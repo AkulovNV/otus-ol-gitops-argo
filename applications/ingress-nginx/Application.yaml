@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nginx-ingress
+  name: ingress-nginx
   namespace: argocd
 spec:
   project: default
@@ -9,6 +9,10 @@ spec:
     repoURL: https://kubernetes.github.io/ingress-nginx
     targetRevision: 4.12.2
     chart: ingress-nginx
+    helm:
+      values: |-
+        controller:
+          replicaCount: 1
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
@@ -16,5 +20,5 @@ spec:
     automated:
       prune: true
       selfHeal: true
-  syncOptions:
-    - CreateNamespace=true
+    # syncOptions:
+    #   - CreateNamespace=true
