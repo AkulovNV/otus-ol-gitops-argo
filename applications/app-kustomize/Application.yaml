@@ -7,10 +7,9 @@ spec:
   project: default
   source:
     repoURL: https://github.com/AkulovNV/otus-ol-gitops-argo.git
-    path: applications/app-kustomize/envs/dev
+    path: applications/app-kustomize/app
     targetRevision: main
-    kustomize:
-      namePrefix: "dev-"
+    kustomize: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: default
