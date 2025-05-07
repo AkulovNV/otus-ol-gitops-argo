@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/AkulovNV/otus-ol-gitops-argo.git
-    path: app-kustomize/envs/dev
+    path: applications/app-kustomize/envs/dev
     targetRevision: main
     kustomize:
       namePrefix: "dev-"
