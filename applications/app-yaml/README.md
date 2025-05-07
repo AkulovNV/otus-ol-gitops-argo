@@ -19,8 +19,9 @@ k get applications.argoproj.io -n argocd
 # Change image: nginx:1.27 -> nginx:1.28
 git push origin main
 
-# Sync the application
+# Sync the application and check the image
 argocd app sync nginx-app 
+kgp -n nginx-app -o yaml|grep image
 
 # Check logs
 k port-forward pod/nginx-app -n nginx-app 8888:80
