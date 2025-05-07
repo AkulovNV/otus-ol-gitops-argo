@@ -1,13 +1,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kustomize-app
+  name: app-kustomize
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/AkulovNV/otus-ol-gitops-argo.git
-    path: kustomize-app/envs/dev
+    path: app-kustomize/envs/dev
     targetRevision: main
     kustomize:
       namePrefix: "dev-"
