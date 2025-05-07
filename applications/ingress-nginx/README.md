@@ -11,8 +11,11 @@ argocd app get ingress-nginx
 git add .
 git commit -am "fix" && git push origin main
 
-# Try to scale up 
+# Try to scale up via kuebctl
 k scale deploy ingress-nginx-controller -n ingress-nginx --replicas=2
+
+# Try to scale up via argocd
+k apply -f applications/ingress-nginx/Application.yaml -n argocd
 
 # Что будет если удалить приложение через kubectl ?
 k delete -f applications/ingress-nginx/Application.yaml -n argocd
