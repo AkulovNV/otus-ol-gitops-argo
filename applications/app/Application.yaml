@@ -1,8 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: app-2
-  namespace: app-2
+  name: app2
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Порядок синхронизации приложений
+    argocd.argoproj.io/compare-options: IgnoreMissing # Игнорировать отсутствующие ресурсы
+    argocd.argoproj.io/sync-options: ApplyOutOfSyncOnly=true # Применять только те ресурсы, которые не синхронизированы
 spec:
   project: default
   source:
@@ -11,8 +15,10 @@ spec:
     targetRevision: main
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: app2
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: true # Удаление ресурсов, которые не описаны в git
+      selfHeal: true # Автоматическое исправление состояния
+    syncOptions:
+      - CreateNamespace=true

@@ -5,7 +5,7 @@ argocd login localhost:8080 --username admin --password <password> --insecure
 
 argocd app create app \
   --repo https://github.com/AkulovNV/otus-ol-gitops-argo.git \
-  --path applications/app-yaml/resources \
+  --path applications/app/resources \
   --dest-server https://kubernetes.default.svc \
   --dest-namespace app \
   --sync-policy automated \
@@ -20,9 +20,17 @@ k get applications.argoproj.io -n argocd
 git push origin main
 
 # Sync the application and check the image
-argocd app sync nginx-app 
+argocd app sync app 
 kgp -n app -o yaml|grep image
 
 # Check logs
 k port-forward <pod-name> -n app 8888:80
 argocd app logs app
+
+# Create application with Application
+k apply -f applications/app/Application.yaml -n argocd
+
+# Fix syncOptions
+argocd app get app2
+argocd app delete app2
+k apply -f applications/app/Application.yaml -n argocd
