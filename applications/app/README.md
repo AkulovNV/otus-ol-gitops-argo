@@ -24,7 +24,7 @@ argocd app sync app
 kgp -n app -o yaml|grep image
 
 # Check logs
-k port-forward <pod-name> -n app 8888:80
+k port-forward svc/app-service -n app 8888:80
 argocd app logs app
 
 # Create application with Application
@@ -32,5 +32,6 @@ k apply -f applications/app/Application.yaml -n argocd
 
 # Fix syncOptions
 argocd app get app2
-argocd app delete app2
+argocd app terminate-op app2
+argocd app delete app2 --yes --wait
 k apply -f applications/app/Application.yaml -n argocd
