@@ -10,9 +10,13 @@ spec:
     targetRevision: 4.12.2
     chart: ingress-nginx
     helm:
+      parameters:
+        - name: controller.replicaCount
+          value: "1"
       values: |-
         controller:
-          replicaCount: 1
+          service:
+            type: NodePort
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
