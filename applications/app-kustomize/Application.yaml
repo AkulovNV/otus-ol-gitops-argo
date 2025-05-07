@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kustomize-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/AkulovNV/otus-ol-gitops-argo.git
+    path: kustomize-app/envs/dev
+    targetRevision: main
+    kustomize:
+      namePrefix: "dev-"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
