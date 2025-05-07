@@ -1,5 +1,5 @@
 # This is a sample application for demonstrating GitOps with ArgoCD
-k port-forward svc/argocd-server -n argocd 80:8080
+k port-forward svc/argocd-server -n argocd 8080:80
 k -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 argocd login localhost:8080 --username admin --password <password> --insecure
 

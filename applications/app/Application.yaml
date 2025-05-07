@@ -20,5 +20,5 @@ spec:
     automated:
       prune: true # Удаление ресурсов, которые не описаны в git
       selfHeal: true # Автоматическое исправление состояния
-    syncOptions:
-      - CreateNamespace=true
+    # syncOptions:
+    #   - CreateNamespace=true
