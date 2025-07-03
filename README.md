@@ -54,4 +54,6 @@ vault write -address=http://127.0.0.1:8200 -tls-skip-verify auth/kubernetes/role
     policies=argocd-policy \
     ttl=48h
 
+k apply -f avp-secret.yaml
+
 ``` 
