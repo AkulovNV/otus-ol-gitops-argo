@@ -22,6 +22,21 @@ configs:
             - generate
             - "."
         lockRepo: false
+      avp-helm-kustomize:
+        allowConcurrency: true
+        discover:
+          find:
+            command:
+              - find
+              - "."
+              - -name
+              - kustomization.yaml
+        generate:
+          command:
+            - sh
+            - "-c"
+            - "kustomize build --enable-helm . | argocd-vault-plugin generate -"
+        lockRepo: false
 
 repoServer:
   envFrom:
@@ -77,6 +92,30 @@ repoServer:
         # Register plugins into sidecar
         - mountPath: /home/argocd/cmp-server/config/plugin.yaml
           subPath: avp.yaml
+          name: argocd-cmp-cm
+        # Important: Mount tools into $PATH
+        - name: custom-tools
+          subPath: argocd-vault-plugin
+          mountPath: /usr/local/bin/argocd-vault-plugin
+    - name: avp-helm-kustomize
+      command: [/var/run/argocd/argocd-cmp-server]
+      image: quay.io/argoproj/argocd:v3.0.6
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      envFrom:
+        - secretRef:
+            name: argocd-vault-env
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /tmp
+          name: cmp-tmp
+        # Register plugins into sidecar
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          subPath: avp-helm-kustomize.yaml
           name: argocd-cmp-cm
         # Important: Mount tools into $PATH
         - name: custom-tools
