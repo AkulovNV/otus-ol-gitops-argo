@@ -28,3 +28,6 @@ git push origin main
 
 # Sync the application
 argocd app sync nginx-app 
+
+# Delete the application
+argocd app delete nginx-app
