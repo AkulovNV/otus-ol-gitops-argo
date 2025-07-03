@@ -24,7 +24,7 @@ helm upgrade -i argocd argo-cd/argo-cd -n argocd --create-namespace -f values.ya
 
 vault login -address=http://127.0.0.1:8200 -tls-skip-verify
 vault kv put -address=http://127.0.0.1:8200 --tls-skip-verify secret/app username=admin password=cGFzc3dvcmQ=
-vault auth enable kubernetes -address=http://127.0.0.1:8200 --tls-skip-verify
+vault auth enable -address=http://127.0.0.1:8200 --tls-skip-verify kubernetes
 
 cat <<EOF > policy.hcl
 # policy.hcl
@@ -33,7 +33,7 @@ path "secret/*" {
 }
 EOF
 
-vault policy write argocd-policy policy.hcl
+vault policy write -address=http://127.0.0.1:8200 --tls-skip-verify argocd-policy policy.hcl
 
 SA_NAME=argocd-repo-server
 NAMESPACE=argocd
