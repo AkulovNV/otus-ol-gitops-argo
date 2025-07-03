@@ -4,13 +4,81 @@ configs:
     exec.enabled: false
     server.rbac.log.enforce.enable: false
     admin.enabled: true
-    configManagementPlugins: |
-      - name: avp
-        init:
-          command: ["sh", "-c"]
-          args: ["argocd-vault-plugin generate ./"]
-        generate:
-          command: ["sh", "-c"]
-          args: ["argocd-vault-plugin generate ./"]
+
   cmp:
     create: true
+    plugins:
+      avp:
+        allowConcurrency: true
+        discover:
+          find:
+            command:
+              - sh
+              - "-c"
+              - "find . -name '*.yaml' |  grep ."
+        generate:
+          command:
+            - argocd-vault-plugin
+            - generate
+            - "."
+        lockRepo: false
+
+repoServer:
+  envFrom:
+    - secretRef:
+        name: argocd-vault-env
+
+  volumes:
+    - configMap:
+        name: argocd-cmp-cm
+      name: argocd-cmp-cm
+    - name: cmp-tmp
+      emptyDir: {}
+    - name: custom-tools
+      emptyDir: {}
+
+
+  initContainers:
+    - name: download-tools
+      image: alpine/curl:latest
+      env:
+        - name: AVP_VERSION
+          value: 1.18.1
+      envFrom:
+        - secretRef:
+            name: argocd-vault-env
+      command: [sh, -c]
+      args:
+        - >-
+          curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v$(AVP_VERSION)/argocd-vault-plugin_$(AVP_VERSION)_linux_amd64 -o argocd-vault-plugin &&
+          chmod +x argocd-vault-plugin &&
+          mv argocd-vault-plugin /custom-tools/
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools
+
+  extraContainers:
+    - name: avp
+      command: [/var/run/argocd/argocd-cmp-server]
+      image: quay.io/argoproj/argocd:v3.0.6
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      envFrom:
+        - secretRef:
+            name: argocd-vault-env
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /tmp
+          name: cmp-tmp
+        # Register plugins into sidecar
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          subPath: avp.yaml
+          name: argocd-cmp-cm
+        # Important: Mount tools into $PATH
+        - name: custom-tools
+          subPath: argocd-vault-plugin
+          mountPath: /usr/local/bin/argocd-vault-plugin
