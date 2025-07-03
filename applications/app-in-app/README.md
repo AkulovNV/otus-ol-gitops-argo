@@ -3,3 +3,5 @@ argocd app get rabbitmq-operator
 
 # Если приложение rabbitmq-operator упало с ошибкой
 argocd app get rabbitmq-operator --refresh
+
+# Move to TF
