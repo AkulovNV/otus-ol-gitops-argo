@@ -4,6 +4,7 @@ Install ArgoCD
 helm repo add argo-cd https://argoproj.github.io/argo-helm
 helm repo update
 helm upgrade -i argocd argo-cd/argo-cd -n argocd --create-namespace -f values.yaml
+k port-forward svc/argocd-server -n argocd 8080:80
 ```
 
 Install Vault
@@ -52,5 +53,5 @@ vault write -address=http://127.0.0.1:8200 -tls-skip-verify auth/kubernetes/role
     bound_service_account_namespaces=argocd \
     policies=argocd-policy \
     ttl=48h
-    
+
 ``` 
