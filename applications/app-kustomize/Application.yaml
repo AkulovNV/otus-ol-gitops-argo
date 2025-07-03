@@ -9,6 +9,7 @@ spec:
     repoURL: https://github.com/AkulovNV/otus-ol-gitops-argo.git
     path: applications/app-kustomize/app
     targetRevision: main
+    # kustomize: {}
     plugin:
       name: avp-helm-kustomize
   destination:
