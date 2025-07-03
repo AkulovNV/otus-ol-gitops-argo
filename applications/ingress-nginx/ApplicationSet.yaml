@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ingress-nginx
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: ingress-nginx-dev
+            namespace: ingress-nginx
+            replicaCount: "1"
+            server: https://kubernetes.default.svc
+            project: default
+          - name: ingress-nginx-prod
+            namespace: ingress-nginx
+            replicaCount: "2"
+            server: https://192.168.5.4:60668
+            project: cluster02
+  template:
+    metadata:
+      name: "{{name}}"
+    spec:
+      project: "{{project}}"
+      source:
+        repoURL: https://kubernetes.github.io/ingress-nginx
+        targetRevision: 4.12.2
+        chart: ingress-nginx
+        helm:
+          parameters:
+            - name: controller.replicaCount
+              value: "{{replicaCount}}"
+          values: |-
+            controller:
+              service:
+                type: NodePort
+      destination:
+        server: "{{server}}"
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

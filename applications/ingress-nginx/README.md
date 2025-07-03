@@ -1,5 +1,5 @@
 # Apply ones
-k apply -f applications/ingress-nginx/Application.yaml -n argocd
+k apply -f ApplicationSet.yaml -n argocd
 
 argocd app list|awk '{print $1,$6}'
 argocd app get ingress-nginx
