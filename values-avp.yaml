@@ -1,0 +1,16 @@
+configs:
+  cm:
+    create: true
+    exec.enabled: false
+    server.rbac.log.enforce.enable: false
+    admin.enabled: true
+    configManagementPlugins: |
+      - name: avp
+        init:
+          command: ["sh", "-c"]
+          args: ["argocd-vault-plugin generate ./"]
+        generate:
+          command: ["sh", "-c"]
+          args: ["argocd-vault-plugin generate ./"]
+  cmp:
+    create: true
