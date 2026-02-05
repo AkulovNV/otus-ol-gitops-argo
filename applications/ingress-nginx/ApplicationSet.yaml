@@ -15,7 +15,7 @@ spec:
           - name: ingress-nginx-prod
             namespace: ingress-nginx
             replicaCount: "2"
-            server: https://192.168.5.4:60668
+            server: https://host.lima.internal:57934
             project: cluster02
   template:
     metadata:
